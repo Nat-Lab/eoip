@@ -3,6 +3,8 @@ eoip
 
 This is an implement of MikroTik's [EoIP](http://wiki.mikrotik.com/wiki/Manual:Interface/EoIP)/EoIPv6 tunnel for Linux using TAP.
 
+Notice: EoIPv6 is work in progress and does not work currently.
+
 ### Usage
 
 On MikroTik:
@@ -60,6 +62,6 @@ Header part of EoIPv6 are similar to [RFC3378](https://tools.ietf.org/html/rfc33
 
 and VERSION = "\x03".
 
-### License
+### Licenses
 
 MIT
