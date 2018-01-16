@@ -33,14 +33,14 @@ int main (int argc, char** argv) {
   int len, mtu = 1500;
 
   if (argc < 2) {
-    fprintf(stderr, "Usage: %s IFNAME { src SRC } { dst DST } { tid TID } [ mtu MTU ]\n", argv[0]);
+    fprintf(stderr, "Usage: %s IFNAME { remote SRC } { local DST } { id TID } [ mtu MTU ]\n", argv[0]);
     exit(1);
   }
 
   for(int i = 2; i < argc; i++) {
-    if(!strcmp(argv[i], "tid")) tid = atoi(argv[++i]);
-    if(!strcmp(argv[i], "src")) strncpy(src, argv[++i], INET_ADDRSTRLEN);
-    if(!strcmp(argv[i], "dst")) strncpy(dst, argv[++i], INET_ADDRSTRLEN);
+    if(!strcmp(argv[i], "id")) tid = atoi(argv[++i]);
+    if(!strcmp(argv[i], "local")) strncpy(src, argv[++i], INET_ADDRSTRLEN);
+    if(!strcmp(argv[i], "remote")) strncpy(dst, argv[++i], INET_ADDRSTRLEN);
     if(!strcmp(argv[i], "mtu")) mtu = atoi(argv[++i]);
   }
 
