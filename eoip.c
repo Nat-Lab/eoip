@@ -76,7 +76,7 @@ int main (int argc, char** argv) {
     unsigned char buffer[mtu + 14];
   } packet;
 
-  fprintf(stderr, "[INFO] attached to %s, tid %d.\n", argv[1], tid);
+  fprintf(stderr, "[INFO] attached to %s, remote %s, local %s, tid %d, mtu %d.\n", argv[1], dst, src, tid, mtu);
 
   do {
     FD_SET(tap_fd, &fds);
