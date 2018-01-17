@@ -33,7 +33,7 @@ int main (int argc, char** argv) {
   int len, mtu = 1500;
 
   if (argc < 2) {
-    fprintf(stderr, "Usage: %s IFNAME { remote SRC } { local DST } { id TID } [ mtu MTU ]\n", argv[0]);
+    fprintf(stderr, "Usage: %s IFNAME { remote RADDR } { local LADDR } { id TID } [ mtu MTU ]\n", argv[0]);
     exit(1);
   }
 
