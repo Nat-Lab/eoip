@@ -73,7 +73,7 @@ int main (int argc, char** argv) {
 
   union {
     struct iphdr ip;
-    unsigned char buffer[mtu + 14];
+    unsigned char buffer[65536];
   } packet;
 
   fprintf(stderr, "[INFO] attached to %s, remote %s, local %s, tid %d, mtu %d.\n", argv[1], dst, src, tid, mtu);
@@ -107,7 +107,7 @@ int main (int argc, char** argv) {
 
       union {
         struct eoip_packet eoip;
-        unsigned char payload[mtu + 14];
+        unsigned char payload[65536];
       } buf;
 
       len = read(tap_fd, buf.eoip.payload, sizeof(packet));
