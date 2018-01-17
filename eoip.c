@@ -29,7 +29,7 @@ int main (int argc, char** argv) {
   fd_set fds;
   char src[INET_ADDRSTRLEN], dst[INET_ADDRSTRLEN];
   unsigned char *buffer;
-  unsigned int tid;
+  unsigned int tid, ptid;
   int len, mtu = 1500;
 
   if (argc < 2) {
@@ -93,12 +93,12 @@ int main (int argc, char** argv) {
       len -= packet.ip.ihl * 4;
 
       if(memcmp(buffer, GRE_MAGIC, 4)) continue;
-      tid = ((unsigned short *) buffer)[1];
+      ptid = ((unsigned short *) buffer)[3];
 
       buffer += 8;
       len -= 8;
 
-      if(len <= 0) continue;
+      if(len <= 0 || tid != ptid) continue;
 
       write(tap_fd, buffer, len);
     }
