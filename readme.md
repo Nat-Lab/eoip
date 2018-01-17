@@ -7,6 +7,14 @@ Notice: EoIPv6 is work in progress and does not work currently.
 
 ### Usage
 
+```
+./eoip IFNAME { remote RADDR } { local LADDR } { id TID } [ mtu MTU ]
+```
+
+Where RADDR = remote address, LADDR = local address, TID = tunnel ID.
+
+### Example
+
 On MikroTik:
 
 ```
@@ -17,7 +25,7 @@ On Linux:
 
 ```
 # gcc eoip.c -o eoip
-# ./eoip tap1 remote 172.17.0.1 local 172.17.0.2 id 100 mtu 1400
+# ./eoip tap1 remote 172.17.0.1 id 100
 ```
 
 ### Protocol
@@ -40,7 +48,7 @@ Here's the packet format of EoIP:
 (noticed that encapsulated frame length is in BE while Tunnel ID is in LE)
 
 
-EoIPv6 is much simpler, it use IP Protocol 97, which is the same as EtherIP:
+EoIPv6 is much simpler. It use IP Protocol 97, which is the same as EtherIP:
 
 ```
 0                   1                   2                   3
@@ -49,7 +57,7 @@ EoIPv6 is much simpler, it use IP Protocol 97, which is the same as EtherIP:
 |  EoIP HEADER  | Ethernet frame...                             |
 ```
 
-Header part of EoIPv6 are similar to [RFC3378](https://tools.ietf.org/html/rfc3378), the 12 reserved bits in the EtherIP header are now Tunnel ID. MikroTik also swaps the first four bits with second four bits in the EtherIP header, so the header looks like this:
+Header part of EoIPv6 are similar to [RFC3378](https://tools.ietf.org/html/rfc3378). The 12 reserved bits in the EtherIP header are now Tunnel ID. MikroTik also swaps the first four bits with second four bits in the EtherIP header, so the header looks like this:
 
 ```
 0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15
@@ -60,7 +68,13 @@ Header part of EoIPv6 are similar to [RFC3378](https://tools.ietf.org/html/rfc33
 +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 ```
 
-and VERSION = "\x03".
+where `VERSION` = ``"\x03"``.
+
+### Contribute/Bugs
+
+Feel free to send PR or report issue on the Github project page at:
+
+https://github.com/Nat-Lab/eoip
 
 ### Licenses
 
