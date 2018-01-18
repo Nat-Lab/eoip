@@ -15,10 +15,13 @@
 #include <arpa/inet.h>
 
 #define MAX(a,b) (((a)>(b))?(a):(b))
+#define EIPHEAD(tid) 0x3000 | tid
+#define BITSWAP(c) ((c & 0xf0) >> 4) | ((c & 0x0f) << 4);
 
 struct eoip6_packet {
-  unsigned char header[2];
-  char payload[0];
+  unsigned char head_p1;
+  unsigned char head_p2;
+  unsigned char payload[0];
 };
 
 int main (int argc, char** argv) {
@@ -26,18 +29,18 @@ int main (int argc, char** argv) {
   fd_set fds;
   char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN];
   unsigned char *buffer;
-  unsigned int tid;
+  unsigned int tid, ptid;
   int len, mtu = 1500;
 
   if (argc < 2) {
-    fprintf(stderr, "Usage: %s IFNAME { src SRC } { dst DST } { tid TID } [ mtu MTU ]\n", argv[0]);
+    fprintf(stderr, "Usage: %s IFNAME { remote RADDR } { local LADDR } { id TID } [ mtu MTU ]\n", argv[0]);
     exit(1);
   }
 
   for(int i = 2; i < argc; i++) {
-    if(!strcmp(argv[i], "tid")) tid = atoi(argv[++i]);
-    if(!strcmp(argv[i], "src")) strncpy(src, argv[++i], INET6_ADDRSTRLEN);
-    if(!strcmp(argv[i], "dst")) strncpy(dst, argv[++i], INET6_ADDRSTRLEN);
+    if(!strcmp(argv[i], "id")) tid = atoi(argv[++i]);
+    if(!strcmp(argv[i], "local")) strncpy(src, argv[++i], INET6_ADDRSTRLEN);
+    if(!strcmp(argv[i], "remote")) strncpy(dst, argv[++i], INET6_ADDRSTRLEN);
     if(!strcmp(argv[i], "mtu")) mtu = atoi(argv[++i]);
   }
 
@@ -69,11 +72,12 @@ int main (int argc, char** argv) {
   FD_ZERO(&fds);
 
   union {
-    struct ip6_hdr ip6;
-    unsigned char buffer[mtu + 14];
+    struct eoip6_packet eoip;
+    uint16_t header;
+    unsigned char buffer[65536];
   } packet;
 
-  fprintf(stderr, "[INFO] attached to %s, tid %d.\n", argv[1], tid);
+   fprintf(stderr, "[INFO] attached to %s, remote %s, local %s, tid %d, mtu %d.\n", argv[1], dst, src, tid, mtu);
 
   do {
     FD_SET(tap_fd, &fds);
@@ -85,35 +89,33 @@ int main (int argc, char** argv) {
 
       len = recv(sock_fd, packet.buffer, sizeof(packet), 0);
 
+      packet.eoip.head_p1 = BITSWAP(packet.eoip.head_p1);
+      ptid = ntohs(packet.header) & 0x0fff;
+
       buffer = packet.buffer;
-
-      fprintf(stderr, "RECV: ");
-      for (int i = 0; i < len; i++) fprintf(stderr, "%02hhx ", buffer[i]);
-      fprintf(stderr, "\n\n");
-
-      // TODO
 
       buffer += 2;
       len -= 2;
 
-      if(len <= 0) continue;
+      if(len <= 0 || ptid != tid) continue;
 
       write(tap_fd, buffer, len);
     }
 
     if(FD_ISSET(tap_fd, &fds)) {
 
-      // TODO
-
       buffer = packet.buffer;
-      len = read(tap_fd, buffer, sizeof(packet)) + 4;
+      len = read(tap_fd, buffer, sizeof(packet));
 
       union {
         struct eoip6_packet eoip;
-        unsigned char payload[mtu + 14];
+        uint16_t header;
+        unsigned char payload[65536];
       } buf;
 
-      memcpy(buf.eoip.header, "\x03\x64", 2); // tunnel ID 100
+      buf.header = htons(EIPHEAD(tid));
+      buf.eoip.head_p1 = BITSWAP(buf.eoip.head_p1);
+
       memcpy(buf.eoip.payload, buffer, len);
 
       struct sockaddr_in6 sin6;
@@ -122,15 +124,7 @@ int main (int argc, char** argv) {
       sin6.sin6_port = htons(97);
       inet_pton(AF_INET6, dst, &sin6.sin6_addr);
 
-      fprintf(stderr, "SEND: ");
-      for (int i = 0; i < len; i++) fprintf(stderr, "%02hhx ", buf.payload[i]);
-      fprintf(stderr, "\n\n");
-
-      fprintf(stderr, "BUFFER: ");
-      for (int i = 0; i < len; i++) fprintf(stderr, "%02hhx ", buffer[i]);
-      fprintf(stderr, "\n\n");
-
-      sendto(sock_fd, buf.payload, len, 0, (struct sockaddr*) &sin6, sizeof(sin6));
+      sendto(sock_fd, buf.payload, len + 2, 0, (struct sockaddr*) &sin6, sizeof(sin6));
     }
 
   } while (1);
