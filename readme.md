@@ -1,15 +1,18 @@
 eoip
 ---
 
-This is an implement of MikroTik's [EoIP](http://wiki.mikrotik.com/wiki/Manual:Interface/EoIP)/EoIPv6 tunnel for Linux using TAP.
+This is an implement of MikroTik's [EoIP](http://wiki.mikrotik.com/wiki/Manual:Interface/EoIP)/EoIPv6 tunnel for Linux using TAP. EoIP (Ethernet over IP) and EoIPv6 (Ethernet over IPv6) are MikroTik RouterOS's Layer 2 tunneling protocol.
+
+The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47) packets, and EoIPv6 protocol encapsulates Ethernet frames in the EtherIP (IP protocol number 97) packets.
 
 ### Usage
 
 ```
-./eoip IFNAME { remote RADDR } { local LADDR } { id TID } [ mtu MTU ]
+Usage: ./eoip [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } { id TID } [ mtu MTU ]
+where: OPTIONS := { -4 | -6 }
 ```
 
-Where RADDR = remote address, LADDR = local address, TID = tunnel ID.
+The parameters are pretty self-explanatory. `RADDR` = remote address, `LADDR` = local address, `TID` = tunnel ID, and `OPTIONS` can be either `-4` (EoIP) or `-6` (EoIPv6), EoIP will be used if unset.
 
 ### Example
 
@@ -46,7 +49,6 @@ Here's the packet format of EoIP:
 ```
 
 (noticed that encapsulated frame length is in BE while Tunnel ID is in LE)
-
 
 EoIPv6 is much simpler. It use IP Protocol 97, which is the same as EtherIP:
 
