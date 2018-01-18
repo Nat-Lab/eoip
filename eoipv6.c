@@ -104,19 +104,10 @@ int main (int argc, char** argv) {
 
     if(FD_ISSET(tap_fd, &fds)) {
 
-      buffer = packet.buffer;
-      len = read(tap_fd, buffer, sizeof(packet));
+      len = read(tap_fd, packet.eoip.payload, sizeof(packet));
 
-      union {
-        struct eoip6_packet eoip;
-        uint16_t header;
-        unsigned char payload[65536];
-      } buf;
-
-      buf.header = htons(EIPHEAD(tid));
-      buf.eoip.head_p1 = BITSWAP(buf.eoip.head_p1);
-
-      memcpy(buf.eoip.payload, buffer, len);
+      packet.header = htons(EIPHEAD(tid));
+      packet.eoip.head_p1 = BITSWAP(packet.eoip.head_p1);
 
       struct sockaddr_in6 sin6;
 
@@ -124,7 +115,7 @@ int main (int argc, char** argv) {
       sin6.sin6_port = htons(97);
       inet_pton(AF_INET6, dst, &sin6.sin6_addr);
 
-      sendto(sock_fd, buf.payload, len + 2, 0, (struct sockaddr*) &sin6, sizeof(sin6));
+      sendto(sock_fd, packet.buffer, len + 2, 0, (struct sockaddr*) &sin6, sizeof(sin6));
     }
 
   } while (1);
