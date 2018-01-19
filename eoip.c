@@ -7,6 +7,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #include <linux/if.h>
 #include <linux/if_tun.h>
@@ -57,10 +58,14 @@ int main (int argc, char** argv) {
   fd_set fds;
   char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN], ifname[IFNAMSIZ];
   unsigned char *buffer;
-  unsigned int tid, ptid, len, mtu = 1500, af = AF_INET, proto = 47;
+  unsigned int tid, ptid, len, mtu = 1500, af = AF_INET, proto = 47, daemon = 0;
+  uid_t uid = 0;
+  gid_t gid = 0;
+  pid_t pid = 1;
 
   if (argc < 2) {
-    fprintf(stderr, "Usage: %s [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } { id TID } [ mtu MTU ]\n", argv[0]);
+    fprintf(stderr, "Usage: eoip [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } { id TID }\n");
+    fprintf(stderr, "                               [ mtu MTU ] [ uid UID ] [ gid GID ] [ fork ]\n");
     fprintf(stderr, "where: OPTIONS := { -4 | -6 }\n");
     exit(1);
   }
@@ -78,7 +83,40 @@ int main (int argc, char** argv) {
     if(!strcmp(argv[i], "local")) strncpy(src, argv[++i], INET6_ADDRSTRLEN);
     if(!strcmp(argv[i], "remote")) strncpy(dst, argv[++i], INET6_ADDRSTRLEN);
     if(!strcmp(argv[i], "mtu")) mtu = atoi(argv[++i]);
+    if(!strcmp(argv[i], "gid")) gid = atoi(argv[++i]);
+    if(!strcmp(argv[i], "uid")) uid = atoi(argv[++i]);
+    if(!strcmp(argv[i], "fork")) daemon = 1;
   }
+
+  if(daemon) {
+    pid = fork();
+    if(pid < 0) {
+      fprintf(stderr, "[ERR] can't daemonize: %s\n", strerror(errno));
+      exit(errno);
+    }
+    if(pid > 0) {
+      printf("%d\n", pid);
+      exit(0);
+    }
+  }
+
+  int res;
+
+  do {
+    pid = fork();
+    if(pid < 0) {
+      fprintf(stderr, "[ERR] can't fork: %s\n", strerror(errno));
+      exit(errno);
+    }
+    if (pid > 0) wait(&res);
+    if (pid == 0) break;
+    if (!WIFEXITED(res)) {
+      fprintf(stderr, "[WARN] child exited unexpectedly with status: %d\n", res);
+    } else {
+      fprintf(stderr, "[CRIT] child exited with status: %d\n", WEXITSTATUS(res));
+      exit(WEXITSTATUS(res));
+    }
+  } while(1);
 
   int sock_fd = socket(af, SOCK_RAW, proto);
 
@@ -88,8 +126,8 @@ int main (int argc, char** argv) {
   populate_sockaddr(af, proto, dst, &raddr, &raddrlen);
 
   if (bind(sock_fd, (struct sockaddr*) &laddr, laddrlen) < 0) {
-    fprintf(stderr, "[ERR] can't bind socket: %s\n", strerror(errno));
-    exit(1);
+    fprintf(stderr, "[ERR] can't bind socket: %s.\n", strerror(errno));
+    exit(errno);
   }
 
   int tap_fd = open("/dev/net/tun", O_RDWR);
@@ -98,8 +136,8 @@ int main (int argc, char** argv) {
   strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
   ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
   if(ioctl(tap_fd, TUNSETIFF, (void *) &ifr)) {
-    fprintf(stderr, "[ERR] can't TUNSETIFF: %s\n", strerror(errno));
-    exit(1);
+    fprintf(stderr, "[ERR] can't TUNSETIFF: %s.\n", strerror(errno));
+    exit(errno);
   }
 
   ifr.ifr_mtu = mtu;
@@ -108,6 +146,9 @@ int main (int argc, char** argv) {
     fprintf(stderr, "[WARN] can't SIOCSIFMTU (%s), please set MTU of %s to %d manually.\n", strerror(errno), ifr.ifr_name, ifr.ifr_mtu);
 
   FD_ZERO(&fds);
+
+  if (uid > 0) setuid(uid);
+  if (gid > 0) setgid(gid);
 
   union {
     uint16_t header;

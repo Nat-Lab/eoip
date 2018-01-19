@@ -8,11 +8,14 @@ The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47
 ### Usage
 
 ```
-Usage: ./eoip [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } { id TID } [ mtu MTU ]
+Usage: eoip [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } { id TID }
+                               [ mtu MTU ] [ uid UID ] [ gid GID ] [ fork ]
 where: OPTIONS := { -4 | -6 }
 ```
 
 The parameters are pretty self-explanatory. `RADDR` = remote address, `LADDR` = local address, `TID` = tunnel ID, and `OPTIONS` can be either `-4` (EoIP) or `-6` (EoIPv6), EoIP will be used if unset.
+
+Optionally you might choose to set MTU, set UID/GID of the process, or fork process to the background. If you set `fork`, `eoip` will fork to background and print PID to stdout.
 
 ### Example
 
