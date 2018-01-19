@@ -178,7 +178,7 @@ int main (int argc, char** argv) {
         select(tap_fd + 1, &fds, NULL, NULL, NULL);
         if (af == AF_INET) {
           len = read(tap_fd, packet.eoip.payload, sizeof(packet));
-          memcpy(packet.eoip.magic, &eoip_hdr, 8);
+          memcpy(&packet.header, &eoip_hdr, 8);
           packet.eoip.len = htons(len);
           len += 8;
         } else {
@@ -196,12 +196,11 @@ int main (int argc, char** argv) {
         if (af == AF_INET) {
           buffer = packet.buffer;
           buffer += packet.ip.ihl * 4;
-          len -= packet.ip.ihl * 4;
-          if (memcmp(buffer, GRE_MAGIC, 4)) continue;
+          len -= packet.ip.ihl * 4 + 8;
+          if (len < 8 || memcmp(buffer, GRE_MAGIC, 4) || len != ntohs(((uint16_t *) buffer)[2])) continue;
           ptid = ((uint16_t *) buffer)[3];
           if (ptid != tid) continue;
           buffer += 8;
-          len -= 8;
         } else {
           if(packet.header != eoip6_hdr.header) continue;
           buffer = packet.buffer + 2;
