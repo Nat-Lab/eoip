@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <poll.h>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -32,6 +33,19 @@ struct eoip_packet {
   uint16_t len;
   uint16_t tid;
   uint8_t  payload[0];
+};
+
+union packet {
+  uint16_t header;
+  uint8_t  buffer[65536];
+  struct iphdr ip;
+  struct eoip_packet eoip;
+  struct eoip6_packet eoip6;
+};
+
+union eoip6_hdr {
+  struct   eoip6_packet eoip6;
+  uint16_t header;
 };
 
 void populate_sockaddr(int af, int port, char addr[],
@@ -150,18 +164,8 @@ int main (int argc, char** argv) {
   if (uid > 0) setuid(uid);
   if (gid > 0) setgid(gid);
 
-  union {
-    uint16_t header;
-    uint8_t  buffer[65536];
-    struct iphdr ip;
-    struct eoip_packet eoip;
-    struct eoip6_packet eoip6;
-  } packet;
-
-  union {
-    struct   eoip6_packet eoip6;
-    uint16_t header;
-  } eoip6_hdr;
+  union packet packet;
+  union eoip6_hdr eoip6_hdr;
 
   struct eoip_packet eoip_hdr;
 
@@ -173,13 +177,12 @@ int main (int argc, char** argv) {
 
   fprintf(stderr, "[INFO] attached to %s, mode %s, remote %s, local %s, tid %d, mtu %d.\n", ifname, af == AF_INET6 ? "EoIPv6" : "EoIP", dst, src, tid, mtu);
 
-  do {
-    FD_SET(tap_fd, &fds);
-    FD_SET(sock_fd, &fds);
+  pid = fork();
+  if (pid > 0) {
+    do {
+      FD_SET(sock_fd, &fds);
 
-    select(MAX(tap_fd, sock_fd) + 1, &fds, NULL, NULL, NULL);
-
-    if (FD_ISSET(sock_fd, &fds)) {
+      select(sock_fd + 1, &fds, NULL, NULL, NULL);
       len = recv(sock_fd, packet.buffer, sizeof(packet), 0);
       if (af == AF_INET) {
         buffer = packet.buffer;
@@ -197,9 +200,12 @@ int main (int argc, char** argv) {
       }
       if(len <= 0) continue;
       write(tap_fd, buffer, len);
-    }
-
-    if(FD_ISSET(tap_fd, &fds)) {
+    } while (1);
+  }
+  if (pid == 0) {
+    do {
+      FD_SET(tap_fd, &fds);
+      select(tap_fd + 1, &fds, NULL, NULL, NULL);
       if (af == AF_INET) {
         len = read(tap_fd, packet.eoip.payload, sizeof(packet));
         memcpy(packet.eoip.magic, &eoip_hdr, 8);
@@ -210,6 +216,6 @@ int main (int argc, char** argv) {
         memcpy(&packet.header, &eoip6_hdr.header, 2);
       }
       sendto(sock_fd, packet.buffer, len, 0, (struct sockaddr*) &raddr, raddrlen);
-    }
-  } while (1);
+    } while (1);
+  }
 }
