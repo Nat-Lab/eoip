@@ -23,14 +23,14 @@
 struct eoip6_packet {
   uint8_t head_p1;
   uint8_t head_p2;
-  unsigned char payload[0];
+  uint8_t payload[0];
 };
 
 struct eoip_packet {
-  unsigned char magic[4];
+  uint8_t  magic[4];
   uint16_t len;
   uint16_t tid;
-  char payload[0];
+  uint8_t  payload[0];
 };
 
 void populate_sockaddr(int af, int port, char addr[],
@@ -111,11 +111,24 @@ int main (int argc, char** argv) {
 
   union {
     uint16_t header;
+    uint8_t  buffer[65536];
     struct iphdr ip;
     struct eoip_packet eoip;
     struct eoip6_packet eoip6;
-    unsigned char buffer[65536];
   } packet;
+
+  union {
+    struct   eoip6_packet eoip6;
+    uint16_t header;
+  } eoip6_hdr;
+
+  struct eoip_packet eoip_hdr;
+
+  eoip6_hdr.header = htons(EIPHEAD(tid));
+  eoip6_hdr.eoip6.head_p1 = BITSWAP(eoip6_hdr.eoip6.head_p1);
+
+  eoip_hdr.tid = tid;
+  memcpy(&eoip_hdr.magic, GRE_MAGIC, 4);
 
   fprintf(stderr, "[INFO] attached to %s, mode %s, remote %s, local %s, tid %d, mtu %d.\n", ifname, af == AF_INET6 ? "EoIPv6" : "EoIP", dst, src, tid, mtu);
 
@@ -131,32 +144,29 @@ int main (int argc, char** argv) {
         buffer = packet.buffer;
         buffer += packet.ip.ihl * 4;
         len -= packet.ip.ihl * 4;
-        if(memcmp(buffer, GRE_MAGIC, 4)) continue;
+        if (memcmp(buffer, GRE_MAGIC, 4)) continue;
         ptid = ((uint16_t *) buffer)[3];
+        if (ptid != tid) continue;
         buffer += 8;
         len -= 8;
       } else {
-        packet.eoip6.head_p1 = BITSWAP(packet.eoip6.head_p1);
-        ptid = ntohs(packet.header) & 0x0fff;
+        if(packet.header != eoip6_hdr.header) continue;
         buffer = packet.buffer + 2;
         len -= 2;
       }
-      if(len <= 0 || tid != ptid) continue;
+      if(len <= 0) continue;
       write(tap_fd, buffer, len);
     }
 
     if(FD_ISSET(tap_fd, &fds)) {
       if (af == AF_INET) {
         len = read(tap_fd, packet.eoip.payload, sizeof(packet));
-        memcpy(packet.eoip.magic, GRE_MAGIC, 4);
+        memcpy(packet.eoip.magic, &eoip_hdr, 8);
         packet.eoip.len = htons(len);
-        packet.eoip.tid = tid;
         len += 8;
       } else {
-        len = read(tap_fd, packet.eoip6.payload, sizeof(packet));
-        packet.header = htons(EIPHEAD(tid));
-        packet.eoip6.head_p1 = BITSWAP(packet.eoip6.head_p1);
-        len += 2;
+        len = read(tap_fd, packet.eoip6.payload, sizeof(packet)) + 2;
+        memcpy(&packet.header, &eoip6_hdr.header, 2);
       }
       sendto(sock_fd, packet.buffer, len, 0, (struct sockaddr*) &raddr, raddrlen);
     }
