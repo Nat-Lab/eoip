@@ -158,7 +158,7 @@ int main (int argc, char** argv) {
 
   fprintf(stderr, "[INFO] attached to %s, mode %s, remote %s, local %s, tid %d, mtu %d.\n", ifname, af == AF_INET6 ? "EoIPv6" : "EoIP", dst, src, tid, mtu);
 
-  pid_t writer = 1, sender, dead;
+  pid_t writer = 1, sender = 1, dead;
   int res, wdead = 0;
 
   do {
