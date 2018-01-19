@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/prctl.h>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -172,6 +173,7 @@ int main (int argc, char** argv) {
       }
       continue;
     }
+    prctl(PR_SET_PDEATHSIG, SIGTERM);
     if (!sender) { // we are sender
       FD_SET(tap_fd, &fds);
       do {
