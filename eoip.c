@@ -114,24 +114,6 @@ int main (int argc, char** argv) {
     }
   }
 
-  int res;
-
-  do {
-    pid = fork();
-    if(pid < 0) {
-      fprintf(stderr, "[ERR] can't fork: %s\n", strerror(errno));
-      exit(errno);
-    }
-    if (pid > 0) wait(&res);
-    if (pid == 0) break;
-    if (!WIFEXITED(res)) {
-      fprintf(stderr, "[WARN] child exited unexpectedly with status: %d\n", res);
-    } else {
-      fprintf(stderr, "[CRIT] child exited with status: %d\n", WEXITSTATUS(res));
-      exit(WEXITSTATUS(res));
-    }
-  } while(1);
-
   int sock_fd = socket(af, SOCK_RAW, proto);
 
   struct sockaddr_storage laddr, raddr;
@@ -177,45 +159,65 @@ int main (int argc, char** argv) {
 
   fprintf(stderr, "[INFO] attached to %s, mode %s, remote %s, local %s, tid %d, mtu %d.\n", ifname, af == AF_INET6 ? "EoIPv6" : "EoIP", dst, src, tid, mtu);
 
-  pid = fork();
-  if (pid > 0) {
-    do {
-      FD_SET(sock_fd, &fds);
+  pid_t writer = 1, sender, dead;
+  int res, wdead = 0;
 
-      select(sock_fd + 1, &fds, NULL, NULL, NULL);
-      len = recv(sock_fd, packet.buffer, sizeof(packet), 0);
-      if (af == AF_INET) {
-        buffer = packet.buffer;
-        buffer += packet.ip.ihl * 4;
-        len -= packet.ip.ihl * 4;
-        if (memcmp(buffer, GRE_MAGIC, 4)) continue;
-        ptid = ((uint16_t *) buffer)[3];
-        if (ptid != tid) continue;
-        buffer += 8;
-        len -= 8;
-      } else {
-        if(packet.header != eoip6_hdr.header) continue;
-        buffer = packet.buffer + 2;
-        len -= 2;
+  do {
+    if (writer == 1) {
+      fprintf(stderr, "starting writer, writer=%d, sender=%d, wdead=%d\n", writer, sender, wdead);
+      writer = fork();
+    }
+    if (writer > 1 && !wdead) {
+      fprintf(stderr, "starting sender, writer=%d, sender=%d, wdead=%d\n", writer, sender, wdead);
+      sender = fork();
+    }
+    if (wdead) wdead = 0;
+    if (writer > 0  && sender > 0) { // we are master
+      dead = waitpid(-1, &res, 0);
+      if (dead == writer) {
+        writer = wdead = 1;
       }
-      if(len <= 0) continue;
-      write(tap_fd, buffer, len);
-    } while (1);
-  }
-  if (pid == 0) {
-    do {
-      FD_SET(tap_fd, &fds);
-      select(tap_fd + 1, &fds, NULL, NULL, NULL);
-      if (af == AF_INET) {
-        len = read(tap_fd, packet.eoip.payload, sizeof(packet));
-        memcpy(packet.eoip.magic, &eoip_hdr, 8);
-        packet.eoip.len = htons(len);
-        len += 8;
-      } else {
-        len = read(tap_fd, packet.eoip6.payload, sizeof(packet)) + 2;
-        memcpy(&packet.header, &eoip6_hdr.header, 2);
-      }
-      sendto(sock_fd, packet.buffer, len, 0, (struct sockaddr*) &raddr, raddrlen);
-    } while (1);
-  }
+      fprintf(stderr, "%s dead.\n", dead == writer ? "writer" : "reader");
+      continue;
+    }
+    if (!sender) { // we are sender
+      do {
+        FD_SET(tap_fd, &fds);
+        select(tap_fd + 1, &fds, NULL, NULL, NULL);
+        if (af == AF_INET) {
+          len = read(tap_fd, packet.eoip.payload, sizeof(packet));
+          memcpy(packet.eoip.magic, &eoip_hdr, 8);
+          packet.eoip.len = htons(len);
+          len += 8;
+        } else {
+          len = read(tap_fd, packet.eoip6.payload, sizeof(packet)) + 2;
+          memcpy(&packet.header, &eoip6_hdr.header, 2);
+        }
+        sendto(sock_fd, packet.buffer, len, 0, (struct sockaddr*) &raddr, raddrlen);
+      } while (1);
+    }
+    if (!writer) { // we are writer
+      do {
+        FD_SET(sock_fd, &fds);
+        select(sock_fd + 1, &fds, NULL, NULL, NULL);
+        len = recv(sock_fd, packet.buffer, sizeof(packet), 0);
+        if (af == AF_INET) {
+          buffer = packet.buffer;
+          buffer += packet.ip.ihl * 4;
+          len -= packet.ip.ihl * 4;
+          if (memcmp(buffer, GRE_MAGIC, 4)) continue;
+          ptid = ((uint16_t *) buffer)[3];
+          if (ptid != tid) continue;
+          buffer += 8;
+          len -= 8;
+        } else {
+          if(packet.header != eoip6_hdr.header) continue;
+          buffer = packet.buffer + 2;
+          len -= 2;
+        }
+        if(len <= 0) continue;
+        write(tap_fd, buffer, len);
+      } while (1);
+    }
+  } while(1);
 }
