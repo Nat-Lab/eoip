@@ -173,8 +173,8 @@ int main (int argc, char** argv) {
       continue;
     }
     if (!sender) { // we are sender
+      FD_SET(tap_fd, &fds);
       do {
-        FD_SET(tap_fd, &fds);
         select(tap_fd + 1, &fds, NULL, NULL, NULL);
         if (af == AF_INET) {
           len = read(tap_fd, packet.eoip.payload, sizeof(packet));
@@ -189,8 +189,8 @@ int main (int argc, char** argv) {
       } while (1);
     }
     if (!writer) { // we are writer
+      FD_SET(sock_fd, &fds);
       do {
-        FD_SET(sock_fd, &fds);
         select(sock_fd + 1, &fds, NULL, NULL, NULL);
         len = recv(sock_fd, packet.buffer, sizeof(packet), 0);
         if (af == AF_INET) {
