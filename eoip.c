@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-#include <poll.h>
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -163,21 +162,14 @@ int main (int argc, char** argv) {
   int res, wdead = 0;
 
   do {
-    if (writer == 1) {
-      fprintf(stderr, "starting writer, writer=%d, sender=%d, wdead=%d\n", writer, sender, wdead);
-      writer = fork();
-    }
-    if (writer > 1 && !wdead) {
-      fprintf(stderr, "starting sender, writer=%d, sender=%d, wdead=%d\n", writer, sender, wdead);
-      sender = fork();
-    }
+    if (writer == 1) writer = fork();
+    if (writer > 1 && !wdead) sender = fork();
     if (wdead) wdead = 0;
     if (writer > 0  && sender > 0) { // we are master
       dead = waitpid(-1, &res, 0);
       if (dead == writer) {
         writer = wdead = 1;
       }
-      fprintf(stderr, "%s dead.\n", dead == writer ? "writer" : "reader");
       continue;
     }
     if (!sender) { // we are sender
