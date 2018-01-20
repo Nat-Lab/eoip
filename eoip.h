@@ -4,11 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/prctl.h>
+#if defined(__linux__)
+  #include <sys/prctl.h>
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-#include <linux/if.h>
+#include <net/if.h>
 #include <errno.h>
 #include <netinet/ip.h>
 

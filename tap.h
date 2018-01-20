@@ -4,7 +4,17 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <linux/if_tun.h>
+#if defined(__linux__)
+  #include <linux/if_tun.h>
+  #define TUN_DEV "/dev/net/tun"
+#elif defined(__FreeBSD__)
+  #include <net/if_tap.h>
+  #define TUN_DEV "/dev/tap"
+#elif defined(__APPLE__)
+#else
+  #error Unsupported platform, will not build.
+#endif
+
 #include <arpa/inet.h>
 #include "eoip-proto.h"
 #include "eoip.h"

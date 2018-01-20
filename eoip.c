@@ -93,13 +93,17 @@ int main (int argc, char** argv) {
   do {
     if (writer == 1) writer = fork();
     if (writer < 0) {
-      kill(-1, SIGTERM);
+      #if defined(__linux__)
+        kill(-1, SIGTERM);
+      #endif
       fprintf(stderr, "[ERR] faild to start TAP listener.\n");
       exit(errno);
     }
     if (writer > 1 && !wdead) sender = fork();
     if (sender < 0) {
-      kill(-1, SIGTERM);
+      #if defined(__linux__)
+        kill(-1, SIGTERM);
+      #endif
       fprintf(stderr, "[ERR] faild to start SOCK listener.\n");
       exit(errno);
     }
@@ -109,7 +113,9 @@ int main (int argc, char** argv) {
       if (dead == writer) writer = wdead = 1;
       continue;
     }
-    prctl(PR_SET_PDEATHSIG, SIGTERM);
+    #if defined(__linux__)
+      prctl(PR_SET_PDEATHSIG, SIGTERM);
+    #endif
     if (!sender) tap_listen(af, tap_fd, sock_fd, tid, (struct sockaddr*) &raddr, raddrlen);
     if (!writer) sock_listen(af, sock_fd, tap_fd, tid);
   } while(1);
