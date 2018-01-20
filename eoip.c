@@ -1,5 +1,20 @@
 #include "eoip.h"
 
+// set name of the caller, inspired from nginx's ngx_setproctitle.c
+void setprocname(char *name, char **dst) {
+  extern char **environ;
+
+  size_t size = 0;
+  for (int i = 0; environ[i]; i++) size += strlen(environ[i]) + 1;
+  memset(environ, 0, size);
+  size = 0;
+  for (int i = 0; dst[i]; i++) size += strlen(dst[i]) + 1;
+  memset(*dst, 0, size);
+
+  dst[1] = NULL;
+  strncpy(dst[0], name, strlen(name));
+}
+
 int main (int argc, char** argv) {
   char src[INET6_ADDRSTRLEN], dst[INET6_ADDRSTRLEN], ifname[IFNAMSIZ];
   unsigned int tid = 0, mtu = 1500, daemon = 0;
@@ -89,6 +104,9 @@ int main (int argc, char** argv) {
   // all set, let's get to work.
   pid_t writer = 1, sender = 1, dead;
   int res, wdead = 0;
+  char procname[128];
+  sprintf(procname, "eoip: master process (tunnel %d, dst %s, on %s)", tid, dst, ifname);
+  setprocname(procname, argv);
 
   do {
     if (writer == 1) writer = fork();
@@ -110,7 +128,13 @@ int main (int argc, char** argv) {
       continue;
     }
     prctl(PR_SET_PDEATHSIG, SIGTERM);
-    if (!sender) tap_listen(af, tap_fd, sock_fd, tid, (struct sockaddr*) &raddr, raddrlen);
-    if (!writer) sock_listen(af, sock_fd, tap_fd, tid);
+    if (!sender) {
+      setprocname("eoip: TAP listener", argv);
+      tap_listen(af, tap_fd, sock_fd, tid, (struct sockaddr*) &raddr, raddrlen);
+    }
+    if (!writer) {
+      setprocname("eoip: SOCKS listener", argv);
+      sock_listen(af, sock_fd, tap_fd, tid);
+    }
   } while(1);
 }
