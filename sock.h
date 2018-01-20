@@ -8,7 +8,7 @@
 
 union packet {
   uint16_t header;
-  uint8_t  buffer[65536];
+  uint8_t  buffer[BUFFER_SIZE];
   #if defined(__linux__)
     struct iphdr ip;
   #else
