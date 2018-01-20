@@ -5,14 +5,6 @@ This is an implement of MikroTik's [EoIP](http://wiki.mikrotik.com/wiki/Manual:I
 
 The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47) packets, and EoIPv6 protocol encapsulates Ethernet frames in the EtherIP (IP protocol number 97) packets.
 
-### Install
-
-```
-# git clone https://github.com/nat-lab/eoip
-# make
-# make install
-```
-
 ### Supported Systems
 
 - Linux
@@ -21,6 +13,15 @@ The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47
 - Darwin
 
 \* For some reason that I don't yet understand, specifying a local address of an interface on BSD-Based systems (except Darwin) will make `bind()` "Can't assign requested address." Please use `0.0.0.0` for the local address on these systems.
+
+### Install
+
+```
+# git clone https://github.com/nat-lab/eoip
+# cd eoip
+# make
+# make install
+```
 
 ### Usage
 
@@ -33,6 +34,8 @@ where: OPTIONS := { -4 | -6 }
 The parameters are pretty self-explanatory. `RADDR` = remote address, `LADDR` = local address, `TID` = tunnel ID, and `OPTIONS` can be either `-4` (EoIP) or `-6` (EoIPv6), EoIP will be used if unset.
 
 Optionally you might choose to set MTU, set UID/GID of the process, or fork process to the background. If you set `fork`, `eoip` will fork to background and print PID to stdout.
+
+Notice that `IFNAME` does not matter if you are using a non-Linux system, since `IFNAME` of TAP can't be set by us on the non-Linux system.
 
 ### Example
 
@@ -48,7 +51,7 @@ On the other side:
 # eoip -4 tap1 local 172.17.0.2 remote 172.17.0.1 id 100
 ```
 
-Now `tap1` is connected to `eoip-1` on MikroTik, don't forget to bring `tap1`.
+Now `tap1` is connected to `eoip-1` on MikroTik, don't forget to bring `tap1` up.
 
 ### Protocol
 
@@ -95,7 +98,7 @@ where `VERSION` = ``"\x03"``.
 
 Feel free to send PR or report issue on the Github project page at:
 
-https://github.com/Nat-Lab/eoip
+https://github.com/nat-lab/eoip
 
 ### Acknowledgement
 
