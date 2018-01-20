@@ -5,6 +5,14 @@ This is an implement of MikroTik's [EoIP](http://wiki.mikrotik.com/wiki/Manual:I
 
 The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47) packets, and EoIPv6 protocol encapsulates Ethernet frames in the EtherIP (IP protocol number 97) packets.
 
+### Install
+
+```
+# git clone https://github.com/nat-lab/eoip
+# make
+# make install
+```
+
 ### Usage
 
 ```
@@ -28,8 +36,7 @@ On MikroTik:
 On Linux:
 
 ```
-# gcc eoip.c -o eoip
-# ./eoip -4 tap1 local 172.17.0.2 remote 172.17.0.1 id 100
+# eoip -4 tap1 local 172.17.0.2 remote 172.17.0.1 id 100
 ```
 
 Now `tap1` on Linux is connected to `eoip-1` on MikroTik.
