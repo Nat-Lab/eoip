@@ -1,7 +1,7 @@
 eoip
 ---
 
-This is an implement of MikroTik's [EoIP](http://wiki.mikrotik.com/wiki/Manual:Interface/EoIP)/EoIPv6 tunnel for Linux using TAP. EoIP (Ethernet over IP) and EoIPv6 (Ethernet over IPv6) are MikroTik RouterOS's Layer 2 tunneling protocol.
+This is an implement of MikroTik's [EoIP](http://wiki.mikrotik.com/wiki/Manual:Interface/EoIP)/EoIPv6 tunnel using TAP. EoIP (Ethernet over IP) and EoIPv6 (Ethernet over IPv6) are MikroTik RouterOS's Layer 2 tunneling protocol.
 
 The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47) packets, and EoIPv6 protocol encapsulates Ethernet frames in the EtherIP (IP protocol number 97) packets.
 
@@ -12,6 +12,15 @@ The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47
 # make
 # make install
 ```
+
+### Supported Systems
+
+- Linux
+- OpenBSD*
+- FreeBSD*
+- Darwin
+
+\* For some reason that I don't yet understand, specifying a local address of an interface on BSD-Based systems (except Darwin) will make `bind()` "Can't assign requested address." Please use `0.0.0.0` for the local address on these systems.
 
 ### Usage
 
@@ -33,13 +42,13 @@ On MikroTik:
 [user@mikrotik] > /interface eoip add local-address=172.17.0.1 name=eoip-1 remote-address=172.17.0.2 tunnel-id=100
 ```
 
-On Linux:
+On the other side:
 
 ```
 # eoip -4 tap1 local 172.17.0.2 remote 172.17.0.1 id 100
 ```
 
-Now `tap1` on Linux is connected to `eoip-1` on MikroTik.
+Now `tap1` is connected to `eoip-1` on MikroTik, don't forget to bring `tap1`.
 
 ### Protocol
 
@@ -87,6 +96,10 @@ where `VERSION` = ``"\x03"``.
 Feel free to send PR or report issue on the Github project page at:
 
 https://github.com/Nat-Lab/eoip
+
+### Acknowledgement
+
+[@amphineko](https://github.com/amphineko) for making me de-punk this project :)
 
 ### Licenses
 

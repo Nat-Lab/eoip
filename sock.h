@@ -2,6 +2,7 @@
 #define EOIP_SOCK_H_
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include "eoip.h"
 #include "eoip-proto.h"
@@ -9,7 +10,11 @@
 union packet {
   uint16_t header;
   uint8_t  buffer[BUFFER_SIZE];
-  struct iphdr ip;
+  #if defined(__linux__)
+    struct iphdr ip;
+  #else
+    struct ip ip;
+  #endif
   struct eoip_packet eoip;
   struct eoip6_packet eoip6;
 };

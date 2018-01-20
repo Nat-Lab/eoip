@@ -4,13 +4,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/prctl.h>
+#if defined(__linux__)
+  #include <sys/prctl.h>
+#endif
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
-#include <linux/if.h>
+#include <net/if.h>
 #include <errno.h>
+#include <arpa/inet.h>
 #include <netinet/ip.h>
+#include <sys/select.h>
 
 #define BUFFER_SIZE 65535
 #define EIPHEAD(tid) 0x3000 | tid

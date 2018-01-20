@@ -85,6 +85,8 @@ int main (int argc, char** argv) {
       exit(errno);
     case 2:
       fprintf(stderr, "[WARN] can't SIOCSIFMTU (%s), please set MTU manually.\n", strerror(errno));
+    case 3:
+      fprintf(stderr, "[WARN] running on OpenBSD/FreeBSD/Darwin, we can't set IFNAME, the interface will be: %s.\n", ifname);
     default:
       break;
   }
@@ -105,19 +107,23 @@ int main (int argc, char** argv) {
   pid_t writer = 1, sender = 1, dead;
   int res, wdead = 0;
   char procname[128];
-  sprintf(procname, "eoip: master process (tunnel %d, dst %s, on %s)", tid, dst, ifname);
+  snprintf(procname, 128, "eoip: master process (tunnel %d, dst %s, on %s)", tid, dst, ifname);
   setprocname(procname, argv);
 
   do {
     if (writer == 1) writer = fork();
     if (writer < 0) {
-      kill(-1, SIGTERM);
+      #if defined(__linux__)
+        kill(-1, SIGTERM);
+      #endif
       fprintf(stderr, "[ERR] faild to start TAP listener.\n");
       exit(errno);
     }
     if (writer > 1 && !wdead) sender = fork();
     if (sender < 0) {
-      kill(-1, SIGTERM);
+      #if defined(__linux__)
+        kill(-1, SIGTERM);
+      #endif
       fprintf(stderr, "[ERR] faild to start SOCK listener.\n");
       exit(errno);
     }
@@ -127,7 +133,9 @@ int main (int argc, char** argv) {
       if (dead == writer) writer = wdead = 1;
       continue;
     }
-    prctl(PR_SET_PDEATHSIG, SIGTERM);
+    #if defined(__linux__)
+      prctl(PR_SET_PDEATHSIG, SIGTERM);
+    #endif
     if (!sender) {
       setprocname("eoip: TAP listener", argv);
       tap_listen(af, tap_fd, sock_fd, tid, (struct sockaddr*) &raddr, raddrlen);

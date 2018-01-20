@@ -5,18 +5,40 @@
 /// return: 0 on success.
 ///         1 on failed.
 ///         2 on failed to set MTU.
-/// a errno will be set when returned value != 0
+///         3 if we can't set ifname, in this case, read ifname back for name.
+/// a errno will be set when returned value != 0 (linux)
 ///
-int make_tap(int *fd, const char *ifname, int mtu) {
-  *fd = open("/dev/net/tun", O_RDWR);
+int make_tap(int *fd, char *ifname, int mtu) {
   struct ifreq ifr;
   memset(&ifr, 0, sizeof(ifr));
-  strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
-  ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
-  if(ioctl(*fd, TUNSETIFF, (void *) &ifr)) return 1;
-  ifr.ifr_mtu = mtu;
-  if(ioctl(socket(AF_INET, SOCK_STREAM, IPPROTO_IP), SIOCSIFMTU, (void *)&ifr))
-    return 2;
+  #if defined(__APPLE__) || defined(__OpenBSD__)
+    ifr.ifr_flags |= IFF_LINK0;
+    char devpath[64];
+    for(int dev = 0; dev < TAP_COUNT; dev++) {
+      snprintf(devpath, 64, "/dev/tap%d", dev);
+      if((*fd = open(devpath, O_RDWR))) {
+        ioctl(*fd, SIOCGIFFLAGS, &ifr); // get old flags
+        ioctl(*fd, SIOCSIFFLAGS, &ifr); // set IFF_LINK0
+        snprintf(ifname, 4, "tap%d", dev);
+        return 3;
+      }
+    }
+    return 1;
+  #else
+    *fd = open(TUNNEL_DEV, O_RDWR);
+  #endif
+  #if defined(__linux__)
+    strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+    ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
+    if(ioctl(*fd, TUNSETIFF, (void *) &ifr)) return 1;
+    ifr.ifr_mtu = mtu;
+    if(ioctl(socket(AF_INET, SOCK_STREAM, IPPROTO_IP), SIOCSIFMTU, (void *)&ifr))
+      return 2;
+  #elif defined(__FreeBSD__)
+    ioctl(*fd, TAPGIFNAME, &ifr);
+    strncpy(ifname, ifr.ifr_name, IFNAMSIZ);
+    return 3;
+  #endif
   return 0;
 }
 
