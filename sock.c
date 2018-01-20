@@ -7,12 +7,10 @@ int bind_sock(int *fd, sa_family_t af, int proto, const struct sockaddr *addr,
 }
 
 void sock_listen(sa_family_t af, int fd, int tap_fd, int tid) {
-  union eoip6_hdr eoip6_hdr;
-  union eoip_hdr eoip_hdr;
+  uint8_t header[8];
+  eoip_header(af, tid, &header);
   uint8_t *buffer;
 
-  populate_eoip6hdr(tid, &eoip6_hdr);
-  populate_eoiphdr(tid, &eoip_hdr);
   union packet packet;
   int len;
   fd_set fds;
@@ -28,7 +26,7 @@ void sock_listen(sa_family_t af, int fd, int tap_fd, int tid) {
       if (((uint16_t *) buffer)[3] != tid) continue;
       buffer += 8;
     } else {
-      if(packet.header != eoip6_hdr.header) continue;
+      if(memcmp(&packet.header, header, 2)) continue;
       buffer = packet.buffer + 2;
       len -= 2;
     }

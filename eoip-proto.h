@@ -20,16 +20,14 @@ struct eoip6_packet {
 };
 
 union eoip_hdr {
-  struct  eoip_packet eoip;
-  uint8_t header[8];
-};
-
-union eoip6_hdr {
+  struct   eoip_packet eoip;
   struct   eoip6_packet eoip6;
-  uint16_t header;
+  uint8_t  header[8];
+  uint16_t header_v;
 };
 
 void populate_eoiphdr(int tid, void *dst);
 void populate_eoip6hdr(int tid, void *dst);
+void eoip_header(int af, int tid, void *dst);
 
 #endif // EOIP_PROTO_H_

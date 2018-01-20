@@ -11,7 +11,12 @@ void populate_eoiphdr(int tid, void *dst) {
 }
 
 void populate_eoip6hdr(int tid, void *dst) {
-  union eoip6_hdr *eoip6_hdr = (union eoip6_hdr *) dst;
-  eoip6_hdr->header = htons(EIPHEAD(tid));
+  union eoip_hdr *eoip6_hdr = (union eoip_hdr *) dst;
+  eoip6_hdr->header_v = htons(EIPHEAD(tid));
   eoip6_hdr->eoip6.head_p1 = BITSWAP(eoip6_hdr->eoip6.head_p1);
+}
+
+void eoip_header(int af, int tid, void *dst) {
+  if (af == AF_INET) populate_eoiphdr(tid, dst);
+  if (af == AF_INET6) populate_eoip6hdr(tid, dst);
 }
