@@ -55,11 +55,7 @@ void tap_listen(sa_family_t af, int fd, int sock_fd, int tid,
   // pre-build the header
   eoip_header(af, tid, &header);
 
-  fd_set fds;
-  FD_SET(fd, &fds);
-
   do {
-    select(fd + 1, &fds, NULL, NULL, NULL);
     if (af == AF_INET) {
       len = read(fd, packet.eoip.payload, sizeof(packet));
       memcpy(&packet.header, &header, 8);

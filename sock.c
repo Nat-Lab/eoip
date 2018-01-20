@@ -18,15 +18,11 @@ void sock_listen(sa_family_t af, int fd, int tap_fd, int tid) {
   uint8_t header[8], *buffer;
   union packet packet;
   int len;
-  fd_set fds;
 
   // pre-build the header
   eoip_header(af, tid, &header);
 
-  FD_SET(fd, &fds);
-
   do {
-    select(fd + 1, &fds, NULL, NULL, NULL);
     len = recv(fd, packet.buffer, sizeof(packet), 0);
 
     if (af == AF_INET) {

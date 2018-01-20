@@ -14,7 +14,6 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <netinet/ip.h>
-#include <sys/select.h>
 
 #define BUFFER_SIZE 65535
 #define EIPHEAD(tid) 0x3000 | tid
