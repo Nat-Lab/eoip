@@ -1,6 +1,7 @@
 #ifndef EOIP_TAP_H_
 #define EOIP_TAP_H_
 
+#include <unistd.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>

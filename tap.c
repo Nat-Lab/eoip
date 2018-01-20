@@ -24,14 +24,20 @@ int make_tap(int *fd, char *ifname, int mtu) {
       }
     }
     return 1;
-  #elif defined(__linux__)
+  #else
     *fd = open(TUNNEL_DEV, O_RDWR);
+  #endif
+  #if defined(__linux__)
     strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
     ifr.ifr_flags = IFF_TAP | IFF_NO_PI;
     if(ioctl(*fd, TUNSETIFF, (void *) &ifr)) return 1;
     ifr.ifr_mtu = mtu;
     if(ioctl(socket(AF_INET, SOCK_STREAM, IPPROTO_IP), SIOCSIFMTU, (void *)&ifr))
       return 2;
+  #elif defined(__FreeBSD__)
+    ioctl(*fd, TAPGIFNAME, &ifr);
+    strncpy(ifname, ifr.ifr_name, IFNAMSIZ);
+    return 3;
   #endif
   return 0;
 }

@@ -86,7 +86,7 @@ int main (int argc, char** argv) {
     case 2:
       fprintf(stderr, "[WARN] can't SIOCSIFMTU (%s), please set MTU manually.\n", strerror(errno));
     case 3:
-      fprintf(stderr, "[WARN] running on OpenBSD or Darwin, we can't set IFNAME, the interface will be: %s.\n", ifname);
+      fprintf(stderr, "[WARN] running on OpenBSD/FreeBSD/Darwin, we can't set IFNAME, the interface will be: %s.\n", ifname);
     default:
       break;
   }
