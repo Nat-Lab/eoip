@@ -85,6 +85,8 @@ int main (int argc, char** argv) {
       exit(errno);
     case 2:
       fprintf(stderr, "[WARN] can't SIOCSIFMTU (%s), please set MTU manually.\n", strerror(errno));
+    case 3:
+      fprintf(stderr, "[WARN] running on OpenBSD or Darwin, we can't set IFNAME, the interface will be: %s.\n", ifname);
     default:
       break;
   }
@@ -105,7 +107,7 @@ int main (int argc, char** argv) {
   pid_t writer = 1, sender = 1, dead;
   int res, wdead = 0;
   char procname[128];
-  sprintf(procname, "eoip: master process (tunnel %d, dst %s, on %s)", tid, dst, ifname);
+  snprintf(procname, 128, "eoip: master process (tunnel %d, dst %s, on %s)", tid, dst, ifname);
   setprocname(procname, argv);
 
   do {

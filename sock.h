@@ -2,6 +2,7 @@
 #define EOIP_SOCK_H_
 
 #include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include "eoip.h"
 #include "eoip-proto.h"

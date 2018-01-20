@@ -12,14 +12,16 @@
 #include <sys/wait.h>
 #include <net/if.h>
 #include <errno.h>
+#include <arpa/inet.h>
 #include <netinet/ip.h>
-
-#include "eoip-proto.h"
-#include "sock.h"
-#include "tap.h"
+#include <sys/select.h>
 
 #define BUFFER_SIZE 65535
 #define EIPHEAD(tid) 0x3000 | tid
 #define BITSWAP(c) ((c & 0xf0) >> 4) | ((c & 0x0f) << 4)
+
+#include "eoip-proto.h"
+#include "sock.h"
+#include "tap.h"
 
 #endif // EOIP_EOIP_H_
