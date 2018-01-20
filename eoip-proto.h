@@ -2,6 +2,8 @@
 #define EOIP_PROTO_H_
 
 #include <stdint.h>
+#include <arpa/inet.h>
+#include <string.h>
 #define PROTO_EOIP 47
 #define PROTO_EOIP6 97
 #define EOIP_MAGIC "\x20\x01\x64\x00"

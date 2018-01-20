@@ -1,5 +1,12 @@
 #include "tap.h"
 
+///
+/// make_tap: try to create a TAP interface with given ifname, mtu.
+/// return: 0 on success.
+///         1 on failed.
+///         2 on failed to set MTU.
+/// a errno will be set when returned value != 0
+///
 int make_tap(int *fd, const char *ifname, int mtu) {
   *fd = open("/dev/net/tun", O_RDWR);
   struct ifreq ifr;
@@ -13,14 +20,22 @@ int make_tap(int *fd, const char *ifname, int mtu) {
   return 0;
 }
 
+///
+/// tap_listen: receive data from a tap w/ given fd and write them to socket
+///              w/ given sock_fd and sockaddr.
+///
 void tap_listen(sa_family_t af, int fd, int sock_fd, int tid,
   const struct sockaddr *raddr, socklen_t raddrlen) {
   uint8_t header[8];
-  eoip_header(af, tid, &header);
-  fd_set fds;
-  FD_SET(fd, &fds);
   union packet packet;
   int len;
+
+  // pre-build the header
+  eoip_header(af, tid, &header);
+
+  fd_set fds;
+  FD_SET(fd, &fds);
+
   do {
     select(fd + 1, &fds, NULL, NULL, NULL);
     if (af == AF_INET) {

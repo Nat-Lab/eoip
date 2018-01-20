@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -18,6 +17,6 @@
 #include "tap.h"
 
 #define EIPHEAD(tid) 0x3000 | tid
-#define BITSWAP(c) ((c & 0xf0) >> 4) | ((c & 0x0f) << 4);
+#define BITSWAP(c) ((c & 0xf0) >> 4) | ((c & 0x0f) << 4)
 
 #endif // EOIP_EOIP_H_

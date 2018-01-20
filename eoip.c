@@ -16,8 +16,10 @@ int main (int argc, char** argv) {
     exit(1);
   }
 
+  // assume that the first argument is IFNAME
   strncpy(ifname, argv[1], IFNAMSIZ);
 
+  // parse some args
   for(int i = 1; i < argc; i++) {
     if(!strcmp(argv[i], "-4")) strncpy(ifname, argv[++i], IFNAMSIZ);
     if(!strcmp(argv[i], "-6")) {
@@ -34,6 +36,7 @@ int main (int argc, char** argv) {
     if(!strcmp(argv[i], "fork")) daemon = 1;
   }
 
+  // fork to background?
   if(daemon) {
     pid = fork();
     if(pid < 0) {
@@ -46,17 +49,20 @@ int main (int argc, char** argv) {
     }
   }
 
+  // build sockaddr for send/recv.
   struct sockaddr_storage laddr, raddr;
   socklen_t laddrlen, raddrlen;
   populate_sockaddr(af, proto, src, &laddr, &laddrlen);
   populate_sockaddr(af, proto, dst, &raddr, &raddrlen);
 
+  // bind a sock
   int sock_fd;
   if (bind_sock(&sock_fd, af, proto, (struct sockaddr*) &laddr, laddrlen) < 0) {
     fprintf(stderr, "[ERR] can't bind socket: %s.\n", strerror(errno));
     exit(errno);
   }
 
+  // bind a tap interface
   int tap_fd;
   switch (make_tap(&tap_fd, ifname, mtu)) {
     case 1:
@@ -68,17 +74,29 @@ int main (int argc, char** argv) {
       break;
   }
 
+  // change UID/GID?
   if (uid > 0) setuid(uid);
   if (gid > 0) setgid(gid);
 
   fprintf(stderr, "[INFO] attached to %s, mode %s, remote %s, local %s, tid %d, mtu %d.\n", ifname, af == AF_INET6 ? "EoIPv6" : "EoIP", dst, src, tid, mtu);
 
+  // all set, let's get to work.
   pid_t writer = 1, sender = 1, dead;
   int res, wdead = 0;
 
   do {
     if (writer == 1) writer = fork();
+    if (writer < 0) {
+      kill(-1, SIGTERM);
+      fprintf(stderr, "[ERR] faild to start TAP listener.\n");
+      exit(errno);
+    }
     if (writer > 1 && !wdead) sender = fork();
+    if (sender < 0) {
+      kill(-1, SIGTERM);
+      fprintf(stderr, "[ERR] faild to start SOCK listener.\n");
+      exit(errno);
+    }
     if (wdead) wdead = 0;
     if (writer > 0  && sender > 0) {
       dead = waitpid(-1, &res, 0);
