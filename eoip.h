@@ -16,6 +16,7 @@
 #include "sock.h"
 #include "tap.h"
 
+#define BUFFER_SIZE 65535
 #define EIPHEAD(tid) 0x3000 | tid
 #define BITSWAP(c) ((c & 0xf0) >> 4) | ((c & 0x0f) << 4)
 
