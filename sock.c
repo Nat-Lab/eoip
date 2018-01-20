@@ -38,7 +38,7 @@ void sock_listen(sa_family_t af, int fd, int tap_fd, int tid) {
 
       // sanity checks
       if (
-        len < 8                                || /* len left < header size */
+        len <= 0                               || /* len left < header size */
         memcmp(buffer, EOIP_MAGIC, 4)          || /* not a EOIP packet */
         len != ntohs(((uint16_t *) buffer)[2]) || /* payload len mismatch */
         ((uint16_t *) buffer)[3] != tid           /* tid mismatch */

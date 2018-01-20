@@ -23,7 +23,7 @@ int main (int argc, char** argv) {
   for(int i = 1; i < argc; i++) {
     if(!strcmp(argv[i], "-4")) strncpy(ifname, argv[++i], IFNAMSIZ);
     if(!strcmp(argv[i], "-6")) {
-      strncpy(ifname, argv[++i], INET6_ADDRSTRLEN);
+      strncpy(ifname, argv[++i], IFNAMSIZ);
       af = AF_INET6;
       proto = PROTO_EOIP6;
     }
@@ -75,8 +75,14 @@ int main (int argc, char** argv) {
   }
 
   // change UID/GID?
-  if (uid > 0) setuid(uid);
-  if (gid > 0) setgid(gid);
+  if (uid > 0 && setuid(uid)) {
+    fprintf(stderr, "[ERR] can't set UID: %s\n", strerror(errno));
+    exit(errno);
+  }
+  if (gid > 0 && setgid(gid)) {
+    fprintf(stderr, "[ERR] can't set GID: %s\n", strerror(errno));
+    exit(errno);
+  }
 
   fprintf(stderr, "[INFO] attached to %s, mode %s, remote %s, local %s, tid %d, mtu %d.\n", ifname, af == AF_INET6 ? "EoIPv6" : "EoIP", dst, src, tid, mtu);
 
