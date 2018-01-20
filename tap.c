@@ -19,7 +19,7 @@ int make_tap(int *fd, char *ifname, int mtu) {
       if((*fd = open(devpath, O_RDWR))) {
         ioctl(*fd, SIOCGIFFLAGS, &ifr); // get old flags
         ioctl(*fd, SIOCSIFFLAGS, &ifr); // set IFF_LINK0
-        snprintf(ifname, 4, "tap%d", dev);
+        snprintf(ifname, IFNAMSIZ, "tap%d", dev);
         return 3;
       }
     }
