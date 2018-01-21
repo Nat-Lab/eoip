@@ -49,7 +49,7 @@ void sock_listen(sa_family_t af, int fd, int tap_fd, int tid) {
     } else {
       /* check header, since tid and \x03 are already there, no other checks
          required. */
-      if(memcmp(&packet.header, header, 2)) continue;
+      if(len < 2 || memcmp(&packet.header, header, 2)) continue;
       buffer = packet.buffer + 2;
       len -= 2;
     }
