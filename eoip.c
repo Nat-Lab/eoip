@@ -113,17 +113,13 @@ int main (int argc, char** argv) {
   do {
     if (writer == 1) writer = fork();
     if (writer < 0) {
-      #if defined(__linux__)
-        kill(-1, SIGTERM);
-      #endif
+      kill(-1, SIGTERM);
       fprintf(stderr, "[ERR] faild to start TAP listener.\n");
       exit(errno);
     }
     if (writer > 1 && !wdead) sender = fork();
     if (sender < 0) {
-      #if defined(__linux__)
-        kill(-1, SIGTERM);
-      #endif
+      kill(-1, SIGTERM);
       fprintf(stderr, "[ERR] faild to start SOCK listener.\n");
       exit(errno);
     }
