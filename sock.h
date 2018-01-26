@@ -10,11 +10,7 @@
 union packet {
   uint16_t header;
   uint8_t  buffer[BUFFER_SIZE];
-  #if defined(__linux__)
-    struct iphdr ip;
-  #else
-    struct ip ip;
-  #endif
+  struct ip ip;
   struct eoip_packet eoip;
   struct eoip6_packet eoip6;
 };

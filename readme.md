@@ -12,7 +12,7 @@ The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47
 - FreeBSD*
 - Darwin
 
-\* For some reason that I don't yet understand, specifying a local address of an interface on BSD-Based systems (except Darwin) will make `bind()` "Can't assign requested address." Please use `0.0.0.0` for the local address on these systems.
+\* For some reason that I don't yet understand, specifying a local address of an interface on BSD-Based systems (except Darwin) will make `bind()` "Can't assign requested address." Please use `0.0.0.0` as the local address on these systems.
 
 ### Install
 
@@ -26,16 +26,16 @@ The EoIP protocol encapsulates Ethernet frames in the GRE (IP protocol number 47
 ### Usage
 
 ```
-Usage: eoip [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } { id TID }
+Usage: eoip [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } [ id TID ]
                                [ mtu MTU ] [ uid UID ] [ gid GID ] [ fork ]
 where: OPTIONS := { -4 | -6 }
 ```
 
-The parameters are pretty self-explanatory. `RADDR` = remote address, `LADDR` = local address, `TID` = tunnel ID, and `OPTIONS` can be either `-4` (EoIP) or `-6` (EoIPv6), EoIP will be used if unset.
+The parameters are pretty self-explanatory. `RADDR` = remote address, `LADDR` = local address, `TID` = tunnel ID, and `OPTIONS` can be either `-4` (EoIP) or `-6` (EoIPv6), EoIP will be used if unset. IFNAME, LADDR and RADDR are required fields, but there are not any parameter check whatsoever, so make sure you do it right.
 
 Optionally you might choose to set MTU, set UID/GID of the process, or fork process to the background. If you set `fork`, `eoip` will fork to background and print PID to stdout.
 
-Notice that `IFNAME` does not matter if you are using a non-Linux system, since `IFNAME` of TAP can't be set by us on the non-Linux system.
+Notice that `IFNAME` does not matter if you are using a non-Linux system, since `IFNAME` of TAP can't be set by us on the non-Linux system. Also, if you are using BSD, make sure to bring the TAP interface up as soon as you can. On BSD/Darwin, reading TAP file descriptor won't block if TAP is down, and this use up CPU cycles pretty quickly.
 
 ### Example
 
@@ -102,7 +102,7 @@ https://github.com/nat-lab/eoip
 
 ### Acknowledgement
 
-[@amphineko](https://github.com/amphineko) for making me de-punk this project :)
+<del>My waifu</del> [@amphineko](https://github.com/amphineko) for making me de-punk this project :)
 
 ### Licenses
 

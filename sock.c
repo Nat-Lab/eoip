@@ -29,13 +29,8 @@ void sock_listen(sa_family_t af, int fd, int tap_fd, int tid) {
       buffer = packet.buffer;
 
       // skip headres
-      #if defined(__linux__)
-        buffer += packet.ip.ihl * 4;
-        len -= packet.ip.ihl * 4 + 8;
-      #else
-        buffer += packet.ip.ip_hl * 4;
-        len -= packet.ip.ip_hl * 4 + 8;
-      #endif
+      buffer += packet.ip.ip_hl * 4;
+      len -= packet.ip.ip_hl * 4 + 8;
 
       // sanity checks
       if (

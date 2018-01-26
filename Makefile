@@ -11,9 +11,9 @@ eoip: $(OBJS)
 install:
 	cp eoip /usr/local/sbin/eoip
 
-.PHONY: uninstal
+.PHONY: uninstall
 uninstall:
-	rm -f /usr/local/sbin/eoip 
+	rm -f /usr/local/sbin/eoip
 
 .PHONY: clean
 clean:

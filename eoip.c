@@ -25,7 +25,7 @@ int main (int argc, char** argv) {
   pid_t pid = 1;
 
   if (argc < 2) {
-    fprintf(stderr, "Usage: eoip [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } { id TID }\n");
+    fprintf(stderr, "Usage: eoip [ OPTIONS ] IFNAME { remote RADDR } { local LADDR } [ id TID ]\n");
     fprintf(stderr, "                               [ mtu MTU ] [ uid UID ] [ gid GID ] [ fork ]\n");
     fprintf(stderr, "where: OPTIONS := { -4 | -6 }\n");
     exit(1);

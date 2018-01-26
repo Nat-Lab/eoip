@@ -55,15 +55,17 @@ void tap_listen(sa_family_t af, int fd, int sock_fd, int tid,
   // pre-build the header
   eoip_header(af, tid, &header);
 
+  // pre-fill headres
+  if(af == AF_INET) memcpy(&packet.header, &header, 8);
+  if(af == AF_INET6) memcpy(&packet.header, &header, 2);
+
   do {
     if (af == AF_INET) {
       if((len = read(fd, packet.eoip.payload, BUFFER_SIZE - 8)) < 0) continue;
-      memcpy(&packet.header, &header, 8);
       packet.eoip.len = htons(len);
       len += 8;
     } else {
       if((len = read(fd, packet.eoip6.payload, BUFFER_SIZE - 4)) < 0) continue;
-      memcpy(&packet.header, &header, 2);
       len += 2;
     }
     sendto(sock_fd, packet.buffer, len, 0, raddr, raddrlen);
