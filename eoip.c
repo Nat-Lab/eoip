@@ -138,7 +138,7 @@ int main (int argc, char** argv) {
     }
     if (!writer) {
       setprocname("eoip: SOCKS listener", argv);
-      sock_listen(af, sock_fd, tap_fd, tid);
+      sock_listen(af, sock_fd, tap_fd, tid, (struct sockaddr*) &raddr, raddrlen);
     }
   } while(1);
 }

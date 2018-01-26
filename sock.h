@@ -18,7 +18,8 @@ union packet {
 int bind_sock(int *fd, sa_family_t af, in_port_t proto,
               const struct sockaddr *addr, const socklen_t addr_len);
 
-void sock_listen(sa_family_t af, int fd, int tap_fd, int tid);
+void sock_listen(sa_family_t af, int fd, int tap_fd, int tid,
+                 struct sockaddr *laddr, socklen_t laddrlen);
 
 void populate_sockaddr(sa_family_t af, in_port_t port, const char *addr,
               struct sockaddr_storage *dst, socklen_t *addrlen);
