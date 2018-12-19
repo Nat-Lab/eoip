@@ -1,4 +1,4 @@
-CFLAGS=-O3 -Wall
+CFLAGS=-std=c99 -O3 -Wall
 OBJS=eoip.o sock.o tap.o eoip-proto.o
 
 eoip: $(OBJS)
